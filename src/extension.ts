@@ -73,7 +73,7 @@ class TableFormatter implements DocumentFormattingEditProvider {
 
             let markdown = '';
             markdown += '|' + block.header.map((cell: string, index: number) => ` ${cell.trim().padEnd(columnWidths[index])} `).join('|') + '|\n';
-            markdown += '|' + block.header.map((cell: string, index: number) => '-'.repeat(cell.length).padEnd(columnWidths[index])).join('|') + '|\n';
+            markdown += '|' + block.header.map((cell: string, index: number) => '-'.repeat(columnWidths[index] + 2).padEnd(columnWidths[index])).join('|') + '|\n';
             for (const row of block.body) {
                 row.pop(); // TODO: Fix the extra phantom cell in MarkDownDOM.
                 markdown += '|' + row.map((cell: string, index: number) => ` ${cell.trim().padEnd(columnWidths[index])} `).join('|') + '|\n';
