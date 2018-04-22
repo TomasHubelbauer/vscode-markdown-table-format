@@ -36,14 +36,18 @@ class TableFormatter implements DocumentFormattingEditProvider {
 
         const edits: TextEdit[] = [];
         for (const table of tables) {
-            // TODO: Fix the type!
-            const dom: any = MarkDownDOM.parse(table.lines.join('\n'));
-            if (dom.blocks.length !== 1 || dom.blocks[0].type !== 'table') {
+            const dom = MarkDownDOM.parse(table.lines.join('\n'));
+            if (dom.blocks.length !== 1) {
                 // TODO: Report error to telemetry.
                 continue;
             }
 
             const block = dom.blocks[0];
+            if (block.type !== 'table') {
+                // TODO: Telemetry.
+                continue;
+            }
+
             if (block.body.find((row: string[]) => row.length !== block.header.length)) {
                 // TODO: Report possible parsing error to telemetry.
                 window.showWarningMessage(`Skipping the table at line ${table.start.line} as it doesn't have matrix shape.`);
