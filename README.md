@@ -7,3 +7,7 @@ Formats tables in MarkDown documents when using the *Format Document* editor con
 ## Release Notes
 
 See the [change log](CHANGELOG.md)
+
+## Contributing
+
+[In the Marketplace](https://marketplace.visualstudio.com/items?itemName=TomasHubelbauer.vscode-markdown-table-format)
