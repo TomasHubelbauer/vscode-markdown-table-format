@@ -1,4 +1,5 @@
 # MarkDown Table Formatter
+![Installs](https://vsmarketplacebadge.apphb.com/installs-short/TomasHubelbauer.vscode-markdown-table-format.svg)
 
 Formats tables in MarkDown documents when using the *Format Document* editor context menu option in VS Code.
 
