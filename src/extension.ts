@@ -62,12 +62,10 @@ class TableFormatter implements DocumentFormattingEditProvider {
                 continue;
             }
 
-            if (body[0].find((cell: string) => cell.replace(/-/g, '') !== '')) {
-                body.unshift(Array(block.header.length).fill('-'));
+            if (body[0].find((cell: string) => cell.replace(/-/g, '') === '')) {
+                // Pop the dash row.
+                body.shift();
             }
-
-            // Pop the dash row.
-            body.shift();
 
             const columnWidths = header.map(() => 0);
 
