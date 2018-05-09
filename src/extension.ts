@@ -54,18 +54,17 @@ class TableFormatter implements DocumentFormattingEditProvider {
                 continue;
             }
 
-            if (block.body.find((row: string[]) => row.length !== block.header.length)) {
+            const { header, body } = block;
+
+            if (body.find((row: string[]) => row.length !== header.length)) {
                 // TODO: Report possible parsing error to telemetry.
                 window.showWarningMessage(`Skipping the table at line ${table.start.line} as it doesn't have matrix shape.`);
                 continue;
             }
 
-            if (block.body[0].find((cell: string) => cell.replace(/-/g, '') !== '')) {
-                window.showWarningMessage(`Skipping the table at line ${table.start.line} as it doesn't have the dash row.`);
-                continue;
+            if (body[0].find((cell: string) => cell.replace(/-/g, '') !== '')) {
+                body.unshift(Array(block.header.length).fill('-'));
             }
-
-            const { header, body } = block;
 
             // Pop the dash row.
             body.shift();
