@@ -1,6 +1,12 @@
 'use strict';
-import { ExtensionContext, TextDocument, FormattingOptions, CancellationToken, TextEdit, languages, Position, DocumentFormattingEditProvider, window, Range } from 'vscode';
+import { ExtensionContext, TextDocument, FormattingOptions, CancellationToken, TextEdit, languages, Position, DocumentFormattingEditProvider, window, Range, EndOfLine } from 'vscode';
 import MarkDownDOM from 'markdown-dom';
+
+type Table = {
+    lines: string[];
+    start: Position;
+    end?: Position;
+};
 
 export function activate(context: ExtensionContext) {
     const tableFormatter = new TableFormatter();
@@ -14,13 +20,13 @@ class TableFormatter implements DocumentFormattingEditProvider {
 
     // TODO: Preserve the correct line endings.
     provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken) {
-        const tables: { lines: string[]; start: Position; end?: Position; }[] = [];
+        const tables: Table[] = [];
         let table = false;
         for (let index = 0; index < document.lineCount; index++) {
             const line = document.lineAt(index);
             if (line.text.startsWith('|')) {
                 if (!table) {
-                    tables.push({ lines: [ line.text ], start: line.range.start });
+                    tables.push({ lines: [line.text], start: line.range.start });
                     table = true;
                 } else {
                     tables[tables.length - 1].lines.push(line.text);
@@ -59,27 +65,33 @@ class TableFormatter implements DocumentFormattingEditProvider {
                 continue;
             }
 
-            block.body.shift(); // Pop the dash row.
+            const { header, body } = block;
 
-            const columnWidths = block.header.map(() => 0);
+            // Pop the dash row.
+            body.shift();
+
+            const columnWidths = header.map(() => 0);
 
             for (let index = 0; index < columnWidths.length; index++) {
-                columnWidths[index] = Math.max(columnWidths[index], block.header[index].trim().length);
+                columnWidths[index] = Math.max(columnWidths[index], header[index].trim().length);
             }
 
-            for (const row of block.body) {
+            for (const row of body) {
                 for (let index = 0; index < columnWidths.length; index++) {
                     columnWidths[index] = Math.max(columnWidths[index], row[index].trim().length);
                 }
             }
 
-            block.header.pop(); // TODO: Fix the extra phantom cell in MarkDownDOM.
+            // TODO: Fix the extra phantom cell in MarkDownDOM.
+            header.pop();
 
+            // TODO: Read correct line breaks from MarkDownDOM.
             let markdown = '';
-            markdown += '|' + block.header.map((cell: string, index: number) => ` ${cell.trim().padEnd(columnWidths[index])} `).join('|') + '|\n';
-            markdown += '|' + block.header.map((cell: string, index: number) => '-'.repeat(columnWidths[index] + 2).padEnd(columnWidths[index])).join('|') + '|\n';
-            for (const row of block.body) {
-                row.pop(); // TODO: Fix the extra phantom cell in MarkDownDOM.
+            markdown += '|' + header.map((cell: string, index: number) => ` ${cell.trim().padEnd(columnWidths[index])} `).join('|') + '|\n';
+            markdown += '|' + header.map((cell: string, index: number) => '-'.repeat(columnWidths[index] + 2).padEnd(columnWidths[index])).join('|') + '|\n';
+            for (const row of body) {
+                // TODO: Fix the extra phantom cell in MarkDownDOM.
+                row.pop();
                 markdown += '|' + row.map((cell: string, index: number) => ` ${cell.trim().padEnd(columnWidths[index])} `).join('|') + '|\n';
             }
 
