@@ -2,7 +2,7 @@
     "name": "vscode-markdown-table-format",
     "displayName": "MarkDown Table Format",
     "description": "Formats MarkDown tables so that all columns have the same width",
-    "version": "0.0.2",
+    "version": "1.0.0",
     "publisher": "TomasHubelbauer",
     "repository": {
         "type": "git",

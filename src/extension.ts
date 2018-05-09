@@ -1,5 +1,5 @@
 'use strict';
-import { ExtensionContext, TextDocument, FormattingOptions, CancellationToken, TextEdit, languages, Position, DocumentFormattingEditProvider, window, Range, EndOfLine } from 'vscode';
+import { ExtensionContext, TextDocument, FormattingOptions, CancellationToken, TextEdit, languages, Position, DocumentFormattingEditProvider, Range } from 'vscode';
 import MarkDownDOM from 'markdown-dom';
 
 type Table = {
@@ -11,14 +11,9 @@ type Table = {
 export function activate(context: ExtensionContext) {
     const tableFormatter = new TableFormatter();
     languages.registerDocumentFormattingEditProvider('markdown', tableFormatter);
-    context.subscriptions.push(tableFormatter);
 }
 
 class TableFormatter implements DocumentFormattingEditProvider {
-    constructor() {
-    }
-
-    // TODO: Preserve the correct line endings.
     provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken) {
         const tables: Table[] = [];
         let table = false;
@@ -42,6 +37,7 @@ class TableFormatter implements DocumentFormattingEditProvider {
 
         const edits: TextEdit[] = [];
         for (const table of tables) {
+            // TODO: Preserve original line endings and parse those to be able to emit the correct ones again
             const dom = MarkDownDOM.parse(table.lines.join('\n'));
             if (dom.blocks.length !== 1) {
                 // TODO: Report error to telemetry.
@@ -50,54 +46,67 @@ class TableFormatter implements DocumentFormattingEditProvider {
 
             const block = dom.blocks[0];
             if (block.type !== 'table') {
-                // TODO: Telemetry.
+                // TODO: Report error to telemetry.
                 continue;
             }
 
             const { header, body } = block;
 
-            if (body.find((row: string[]) => row.length !== header.length)) {
-                // TODO: Report possible parsing error to telemetry.
-                window.showWarningMessage(`Skipping the table at line ${table.start.line} as it doesn't have matrix shape.`);
-                continue;
-            }
-
-            if (body[0].find((cell: string) => cell.replace(/-/g, '') === '')) {
-                // Pop the dash row.
+            // Pop the dash row if any.
+            if (body[0].find(cell => cell.replace(/-/g, '') === '')) {
                 body.shift();
             }
 
-            const columnWidths = header.map(() => 0);
-
-            for (let index = 0; index < columnWidths.length; index++) {
-                columnWidths[index] = Math.max(columnWidths[index], header[index].trim().length);
-            }
-
-            for (const row of body) {
-                for (let index = 0; index < columnWidths.length; index++) {
-                    columnWidths[index] = Math.max(columnWidths[index], row[index].trim().length);
-                }
-            }
+            const lengths = [];
 
             // TODO: Fix the extra phantom cell in MarkDownDOM.
             header.pop();
+            for (let index = 0; index < header.length; index++) {
+                lengths[index] = Math.max(lengths[index] || 0, header[index].trim().length);
+            }
 
-            // TODO: Read correct line breaks from MarkDownDOM.
-            let markdown = '';
-            markdown += '|' + header.map((cell: string, index: number) => ` ${cell.trim().padEnd(columnWidths[index])} `).join('|') + '|\n';
-            markdown += '|' + header.map((cell: string, index: number) => '-'.repeat(columnWidths[index] + 2).padEnd(columnWidths[index])).join('|') + '|\n';
             for (const row of body) {
                 // TODO: Fix the extra phantom cell in MarkDownDOM.
                 row.pop();
-                markdown += '|' + row.map((cell: string, index: number) => ` ${cell.trim().padEnd(columnWidths[index])} `).join('|') + '|\n';
+                for (let index = 0; index < row.length; index++) {
+                    lengths[index] = Math.max(lengths[index] || 0, row[index].trim().length);
+                }
+            }
+
+            let markdown = '';
+
+            // Insert the header.
+            markdown += '|';
+            for (let index = 0; index < lengths.length; index++) {
+                markdown += ` ${(header[index] || '').trim().padEnd(lengths[index])} |`;
+            }
+
+            // TODO: Read correct line breaks from MarkDownDOM.
+            markdown += '\n';
+
+            // Insert the dashes.
+            markdown += '|';
+            for (let index = 0; index < lengths.length; index++) {
+                markdown += '-'.repeat(lengths[index] + 2).padEnd(lengths[index]) + '|';
+            }
+
+            // TODO: Read correct line breaks from MarkDownDOM.
+            markdown += '\n';
+
+            // Insert the rows.
+            for (const row of body) {
+                markdown += '|';
+                for (let index = 0; index < lengths.length; index++) {
+                    markdown += ` ${(row[index] || '').trim().padEnd(lengths[index])} |`;
+                }
+
+                // TODO: Read correct line breaks from MarkDownDOM.
+                markdown += '\n';
             }
 
             edits.push(TextEdit.replace(new Range(table.start, table.end!), markdown));
         }
 
         return edits;
-    }
-
-    dispose() {
     }
 }
