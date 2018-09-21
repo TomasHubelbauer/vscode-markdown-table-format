@@ -14,7 +14,7 @@ export function activate(context: ExtensionContext) {
 }
 
 class TableFormatter implements DocumentFormattingEditProvider {
-    provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken) {
+    provideDocumentFormattingEdits(document: TextDocument, _options: FormattingOptions, _token: CancellationToken) {
         const tables: Table[] = [];
         let table = false;
         for (let index = 0; index < document.lineCount; index++) {
@@ -35,6 +35,12 @@ class TableFormatter implements DocumentFormattingEditProvider {
             }
         }
 
+        // Include last row in the document not followed by a newline to the last table
+        if (table) {
+            const currentTable = tables[tables.length - 1];
+            currentTable.end = document.lineAt(document.lineCount - 1).range.end;
+        }
+
         const edits: TextEdit[] = [];
         for (const table of tables) {
             // TODO: Preserve original line endings and parse those to be able to emit the correct ones again
@@ -53,11 +59,11 @@ class TableFormatter implements DocumentFormattingEditProvider {
             const { header, body } = block;
 
             // Pop the dash row if any.
-            if (body[0].find(cell => cell.replace(/-/g, '') === '')) {
+            if (body[0].find(cell => cell.replace(/[- ]/g, '') === '')) {
                 body.shift();
             }
 
-            const lengths = [];
+            const lengths: number[] = [];
 
             // TODO: Fix the extra phantom cell in MarkDownDOM.
             header.pop();

@@ -1,5 +1,10 @@
 # Change Log
 
+## `1.0.1` (2018-09-21)
+
+- Allow spaces in the dash row (`|--|--|`) so that it doesn't get turned into a data row if it has any
+- Include table row on the last line of the document not followed by a newline to the table too
+
 ## `1.0.0` (2018-05-09)
 
 - Do not skip tables without matrix shape

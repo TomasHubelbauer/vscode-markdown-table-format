@@ -2,13 +2,17 @@
     "name": "vscode-markdown-table-format",
     "displayName": "MarkDown Table Format",
     "description": "Formats MarkDown tables so that all columns have the same width",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "MIT",
     "categories": [
         "Programming Languages",
         "Linters"
     ],
-    "keywords": ["markdown", "table", "intellisense"],
+    "keywords": [
+        "markdown",
+        "table",
+        "intellisense"
+    ],
     "publisher": "TomasHubelbauer",
     "repository": {
         "type": "git",
