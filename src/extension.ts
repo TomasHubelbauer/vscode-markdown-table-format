@@ -76,7 +76,8 @@ class TableFormatter implements DocumentFormattingEditProvider {
                 // TODO: Fix the extra phantom cell in MarkDownDOM.
                 row.pop();
                 for (let index = 0; index < row.length; index++) {
-                    lengths[index] = Math.max(lengths[index] || 0, row[index].trim().length);
+                    let twoBytes = row[index].match(/[^\x01-\x7E]/g) || []
+                    lengths[index] = Math.max(lengths[index] || 0, row[index].trim().length + twoBytes.length);
                 }
             }
 
@@ -85,7 +86,8 @@ class TableFormatter implements DocumentFormattingEditProvider {
             // Insert the header.
             markdown += '|';
             for (let index = 0; index < lengths.length; index++) {
-                markdown += ` ${(header[index] || '').trim()} |`;
+                let twoBytes = header[index].match(/[^\x01-\x7E]/g) || []
+                markdown += ` ${(header[index] || '').trim().padEnd(lengths[index] - twoBytes.length)} |`;
             }
 
             // TODO: Read correct line breaks from MarkDownDOM.
@@ -104,7 +106,9 @@ class TableFormatter implements DocumentFormattingEditProvider {
             for (const row of body) {
                 markdown += '|';
                 for (let index = 0; index < lengths.length; index++) {
-                    markdown += ` ${(row[index] || '').trim().padEnd(lengths[index])} |`;
+                    let line = row[index] || ''
+                    let twoBytes = line.match(/[^\x01-\x7E]/g) || [];
+                    markdown += ` ${(line).trim().padEnd(lengths[index] - twoBytes.length)} |`;
                 }
 
                 // TODO: Read correct line breaks from MarkDownDOM.
