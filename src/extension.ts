@@ -68,7 +68,8 @@ class TableFormatter implements DocumentFormattingEditProvider {
             // TODO: Fix the extra phantom cell in MarkDownDOM.
             header.pop();
             for (let index = 0; index < header.length; index++) {
-                lengths[index] = Math.max(lengths[index] || 0, header[index].trim().length);
+                let twoBytes = header[index].match(/[^\x01-\x7E]/g) || []
+                lengths[index] = Math.max(lengths[index] || 0, header[index].trim().length + twoBytes.length);
             }
 
             for (const row of body) {
@@ -84,7 +85,7 @@ class TableFormatter implements DocumentFormattingEditProvider {
             // Insert the header.
             markdown += '|';
             for (let index = 0; index < lengths.length; index++) {
-                markdown += ` ${(header[index] || '').trim().padEnd(lengths[index])} |`;
+                markdown += ` ${(header[index] || '').trim()} |`;
             }
 
             // TODO: Read correct line breaks from MarkDownDOM.
